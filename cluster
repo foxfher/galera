@@ -1,0 +1,213 @@
+#!/bin/bash
+
+# COLORS #
+WHITE="\033[m"
+WHITE_BOLD="\033[1m"
+BLUE="\033[34m"
+RED="\033[31m"
+YELLOW="\033[33m"
+GREEN="\033[32m"
+GRAY="\033[0;37m"
+CEND="\033[0m"
+#END OF COLORS
+# SYSTEM MESSAGES #
+WARNING="${RED}[x]::[Warning]:${CEND}"
+SUCCESS="${GREEN}[✔]::[Succes]:${CEND}"
+INFO="${BLUE}[!]::[Info]:${CEND}"
+## Variables
+CMD="apt-get"
+FILE=""
+declare -A IP
+SERV="Principal"
+GALERA_CONF="/etc/my.cnf.d/galera.cnf"
+name=""
+
+
+########  Detecta Sistema Distribución de Linux ########
+detecta_os() {
+  if ! cat /proc/version | grep -q SUSE; then
+    CMD="apt-get"
+  else
+    CMD="zypper"
+  fi
+}
+
+########  Ayuda del Comando ########
+uso() {
+  name=$(awk -F"/" '{print $NF}' <<<"${0}")
+  #echo -e "───────────────────────────────────────────────────────────────────────"
+  echo -e ":: Comando $name  "
+  echo -e "Instalación del Cluster y adiciona replica."
+  echo
+  echo -e "${GREEN}Modo sw empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
+  echo -e "Los argumentos son obligatorios para las opciones"
+  echo -e "${YELLOW}-s IP         ${GRAY}IP o Dominio del Servidor Principal (ferrum.no-ip.net)$CEND"
+  echo -e "${YELLOW}-r IP         ${GRAY}IP o Dominio de la replica (ferrum.no-ip.net)$CEND"
+  #echo -e  "───────────────────────────────────────────────────────────────────────"
+  echo
+  echo -e "${YELLOW}:: La IP o Dominio del Servidor Principal y Replica deben ser diferentes $CEND"
+  echo -e "${YELLOW}:: Recuerde que los siguientes Puertos del Router deben estar abiertos: 22 tcp, 3306 tcp, 4567 tcp/udp,4568 tcp,4444 tcp $CEND"
+  exit
+}
+
+########  Obtener parametros y opciones ########
+param() {
+  while getopts ":s:r:o :" op; do
+    case "${op}" in
+    s) IP[SERVIDOR]=${OPTARG} ;;
+    r) IP[REPLICA]=${OPTARG} ;;
+    o) SERV=${OPTARG:="Replica"} ;;
+    *) uso ;;
+    esac
+  done
+
+  shift $((OPTIND - 1))
+  [[ -z "${IP[SERVIDOR]}" ]] || [[ -z "${IP[REPLICA]}" ]] || [[ "${IP[SERVIDOR]}" == "${IP[REPLICA]}" ]] && uso
+}
+
+instalar() {
+  local instalarGalera=0
+  local instalarMariaDB=0
+
+  obtieneIP
+  obtieneIPLocal
+ if [ "$SERV" == "Principal" ]; then
+  validarIP "${IP[SERVIDOR]}" "Principal"
+  validarIP "${IP[REPLICA]}" "Replica"
+ fi 
+
+  echo -e ":: Configurando el Servidor $SERV"
+  #valida si existe archivo de configuración de galera y Mysql (MariaDB)
+  [[ ! -f $GALERA_CONF ]] && [[ "${SERV}" == "Principal" ]] && instalarGalera=1
+  instalarMariaDB=$(validaVerMDB)
+  if [[ $instalarMariaDB -ge 1 ]]; then
+    echo ":: Instalando MariaDB $instalarMariaDB"
+    curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+    [[ $instalarMariaDB -eq 1 ]] && echo ":: Configirar MariaDB" && mysql_secure_installation
+  fi
+  echo ":: Configurando MariaDB/Mysql para la sincronización en el Servidor $SERV"
+  galera $instalarGalera
+  #galeraConf "" "${IP[SERVIDOR]}" "Principal" #cp -rf /tmp/galera_Pricipal.conf $GALERA_CONF
+  #galeraConf "arero11sur.no-ip.net,192.168.1.181" "${IP[REPLICA]}" "Replica" 
+  echo ":: Se ha terminado de Configurar en el  Servidor $SERV"
+}
+######## Generá o obtiene configuración de Galera  ##########
+galera(){
+  local IPS=""
+  if [ "$SERV" == "Principal" ]; then
+     sudo systemctl stop mariadb.service
+     if [[ $1 -eq 0 ]];then
+        [[ grep -qF "${IP[REPLICA]}" $GALERA_CONF ]] && echo ":: Valide la IP de la Replica puede ser que ya este configurado" && exit
+        IPS=$(cat $GALERA_CONF | grep "wsrep_cluster_address" | sed -e 's/"$//' | sed 's/wsrep_cluster_address="gcomm:\/\///')
+     fi
+     galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
+     echo ":: Copiando la configuración temporal al MariaDB"
+     sudo cp -rf /tmp/galera_Pricipal.conf $GALERA_CONF
+     echo ":: Activando el CLuster en el Servidor Principal"
+     [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
+     sudo systemctl start mariadb.service  
+     galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
+     echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
+     scp /tmp/galera_Replica.conf ferrum@$IP{[REPLICA]}:$GALERA_CONF
+     echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
+     ssh ferrum@@$IP{[REPLICA]} "$(< $name -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
+  else
+    [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
+    echo ":: Reiniciando MariaDB en el servidor de $SERV"
+    sudo systemctl restart mariadb.service 
+  fi
+ 
+}
+galeraConf(){
+  local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
+  local GALERA_CONF="/tmp/galera_${3}.conf"
+  echo ":: Creando configuración en el Servidor $3"
+  echo -e "[galera]" > $GALERA_CONF
+  echo -e "binlog_format=ROW" >> $GALERA_CONF
+  echo -e "default-storage-engine=innodb" >> $GALERA_CONF
+  echo -e "innodb_autoinc_lock_mode=2" >> $GALERA_CONF
+  echo -e "bind-address=0.0.0.0" >> $GALERA_CONF
+  echo -e "\n# Galera Provider Configuration" >> $GALERA_CONF
+  echo -e "wsrep_on=ON" >> $GALERA_CONF
+  echo -e "wsrep_provider=/usr/lib/galera/libgalera_smm.so" >> $GALERA_CONF
+  echo -e "\n# Galera Cluster Configuration" >> $GALERA_CONF
+  echo -e "wsrep_cluster_name="galera_cluster"" >> $GALERA_CONF
+  echo -e "wsrep_cluster_address=\"gcomm://${IPS},${IP[REPLICA]}\"" >> $GALERA_CONF
+  echo -e "\n# Galera Synchronization Configuration" >> $GALERA_CONF
+  echo -e "wsrep_sst_method=rsync" >> $GALERA_CONF
+  echo -e "\n# Galera Node Configuration" >> $GALERA_CONF
+  echo -e "wsrep_node_address=\"$2\"" >> $GALERA_CONF
+  echo -e "wsrep_node_name=\"$(nombre "$2")\"" >> $GALERA_CONF
+}
+######## Validar versión de Mysql ########
+validaVerMDB() {
+  local vm=10.1
+  which mysql >/dev/null 2>&1
+  if [ "$?" -eq "0" ]; then
+    v=$(mysql --version | awk '{ print $5 }' | awk -F\, '{ print $1 }' | awk -F "-MariaDB" ' {printf $1 }')
+    [[ $(echo "${v}" | grep -o -E "[.]" | wc -l) -ge 2 ]] && v=$(echo $v | awk -F "." '{printf  "%d.%d",$1,$2}')
+    #echo $v
+    [[ $(echo "$v < $vm" | bc -l) -eq 1 ]] && i=2 || i=0
+  else
+    i=1
+  fi
+  echo $i
+}
+
+######## Valida Puertos de las IP ###########
+validarIP() {
+  Puertos=(22 3306 4567 4568 4444)
+  echo ":: Validando Puertos en el Servidor $2 ($1)"
+  echo -e "${YELLOW}:: Recuerde que los siguientes Puertos del Router deben estar abiertos: 22 tcp, 3306 tcp, 4567 tcp/udp,4568 tcp,4444 tcp $CEND"
+  e=0
+  for p in "${Puertos[@]}"; do
+    me=$(nc -zv $1 $p 2>&1)
+
+    if [[ $me =~ "open" ]]; then
+      m="$SUCCESS Puerto abierto"
+    elif [[ $me =~ "Error" ]]; then
+      m="$WARNING Valide IP"
+      e=$(($e + 1))
+    else
+      m="$WARNING Puerto Cerrado"
+      e=$(($e + 1))
+    fi
+    echo -e "${m} $1 $p"
+  done
+  [[ "$SERV" == "Principal" ]] && (([[ $me =~ "${IP[PUBLICA]}" ]] || [[ $me =~ "${IP[LOCAL]}" ]]) && SERV=$2)
+  [[ $e -gt 0 ]] && echo -e "${YELLOW}::Valide los Puertos en el Router o IP Pública  $CEND" && exit
+
+}
+
+######## Remplaza un  palabra por otra en una cadena ########
+function strreplace() { #(SEARCH ,REPLACE, STRING)
+    local SEARCH=$1
+    local REPLACE=$2
+    local STRING=$3
+    echo $STRING | sed 's/'"$SEARCH"'/'"$REPLACE"'/g'
+}
+
+########  Obtiene IP Publica  ########
+obtieneIP() {
+  IP[PUBLICA]=$(curl -silent -L http://checkip.amazonaws.com | tail -n 1)
+}
+######## Obtiene IP Local ########
+obtieneIPLocal() {
+  IP[LOCAL]=$(ip route get 1.2.3.4 | awk '{print $7}')
+}
+
+######## Requerimientos ########
+requerimientos() {
+  echo ":: Instalando Requerimientos en el Servidor $SERV"
+  [[ $CMD="apt-get" ]] && sudo apt-get update
+  sudo $CMD install curl netcat rsync  net-tools
+}
+######## Obtiene nombre del dominio ########
+function nombre { 
+  [[ "${1%%.*}" =~ ^[0-9]+$ ]] && echo "$SERV$(($RANDOM%100))" ||  echo ${1%%.*}
+}
+
+detecta_os
+param $@
+requerimientos
+instalar
