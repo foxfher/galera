@@ -99,7 +99,7 @@ instalar() {
 galera(){
   local IPS=""
   if [ "$SERV" == "Principal" ]; then
-     #sudo systemctl stop mariadb.service
+     sudo systemctl stop mariadb.service
      if [[ $1 -eq 0 ]];then
         [[ ! -z $(cat $GALERA_CONF | grep "${IP[REPLICA]}") ]] && echo ":: Valide la IP de la Replica puede ser que ya este configurado" && exit
         IPS=$(cat $GALERA_CONF | grep "wsrep_cluster_address" | sed -e 's/"$//' | sed 's/wsrep_cluster_address="gcomm:\/\///')
@@ -111,7 +111,7 @@ galera(){
      echo ":: Activando el Cluster Galera en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
      echo "::Iniciando MariaDB"
-     sudo systemctl restart mariadb.service  
+     sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
      sudo scp galera_Replica.cnf cluster $USUARIO@${IP[REPLICA]}:~/
