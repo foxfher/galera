@@ -21,7 +21,7 @@ declare -A IP
 SERV="Principal"
 GALERA_CONF="/etc/my.cnf.d/galera.cnf"
 USUARIO="ferrum"
-name=""
+APP=""
 
 
 ########  Detecta Sistema Distribución de Linux ########
@@ -35,9 +35,9 @@ detecta_os() {
 
 ########  Ayuda del Comando ########
 uso() {
-  name=$(awk -F"/" '{print $NF}' <<<"${0}")
+  APP=$(awk -F"/" '{print $NF}' <<<"${0}")
   #echo -e "───────────────────────────────────────────────────────────────────────"
-  echo -e ":: Comando $name  "
+  echo -e ":: Comando $APP  "
   echo -e "Instalación del Cluster y adiciona replica."
   echo
   echo -e "${GREEN}Modo de empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
@@ -84,9 +84,12 @@ instalar() {
   [[ ! -f $GALERA_CONF ]] && [[ "${SERV}" == "Principal" ]] && instalarGalera=1
   instalarMariaDB=$(validaVerMDB)
   if [[ $instalarMariaDB -ge 1 ]]; then
-    echo ":: Instalando MariaDB $instalarMariaDB"
+    echo ":: Instalando MariaDB"
+    echo "::$INFO Se Agregara Repositorio de MariaDB"
     curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
-    [[ $instalarMariaDB -eq 1 ]] && echo ":: Configirar MariaDB" && mysql_secure_installation
+    [[ $CMD="apt-get" ]] && sudo apt-get update
+    sudo $CMD install mariadb-server mariadb-client -y
+    [[ $instalarMariaDB -eq 1 ]] && echo ":: Configurar MariaDB" && mysql_secure_installation
   fi
   echo ":: Configurando MariaDB/Mysql para la sincronización en el Servidor $SERV"
   galera $instalarGalera
@@ -111,9 +114,9 @@ galera(){
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     scp /tmp/galera_Replica.conf $USUARIO@$IP{[REPLICA]}:$GALERA_CONF
+     scp /tmp/galera_Replica.conf $USUARIO@${IP[REPLICA]}:$GALERA_CONF
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
-     ssh USUARIO@$IP{[REPLICA]} "$(< $name -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
+     ssh USUARIO@${IP[REPLICA]} "$(< $APP -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
   else
     [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
     echo ":: Reiniciando MariaDB en el servidor de $SERV"
