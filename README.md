@@ -8,7 +8,7 @@ Instala los archivos necesarios
 
 Para instalar, ejecute este comando en su terminal:
 ```console
-$ curl https://raw.githubusercontent.com/foxfher/cluster/master/install | sh
+$ curl https://raw.githubusercontent.com/foxfher/galera/master/install | sh
 ```
 
 ##  &copy;Creditos
