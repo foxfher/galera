@@ -19,7 +19,7 @@ CMD="apt-get"
 FILE=""
 declare -A IP
 SERV="Principal"
-GALERA_CONF='/etc/mysql/mariadb.conf.d/galera.cnf'#"/etc/my.cnf.d/galera.cnf"
+GALERA_CONF="/etc/mysql/mariadb.conf.d/galera.cnf" 
 USUARIO="ferrum"
 APP="cluster"
 
@@ -107,12 +107,13 @@ galera(){
      galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
      echo ":: Copiando la configuración temporal al MariaDB"
      sudo mv "galera_Pricipal.conf" $GALERA_CONF
-     echo ":: Activando el CLuster en el Servidor Principal"
+     echo ":: Activando el Cluster en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
+     echo "::Iniciando MariaDBmoon"
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     scp galera_Replica.conf $USUARIO@${IP[REPLICA]}:galera_Replica.conf
+     scp galera_Replica.conf $USUARIO@${IP[REPLICA]}:$GALERA_CONF
      scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor REPLICA (${IP[REPLICA]}), para configuar el Cluster"
      echo "chmod u+x cluster" > install.sh
@@ -130,24 +131,25 @@ galera(){
 }
 galeraConf(){
   local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
-  local GALERA_CONF="galera_${3}.conf"
+  local GALERA_CONF1="galera_${3}.conf"
+  if [[ $SERV == "Principal" ] && GALERA_CONF1="${GALERA_CONF}"]
   echo ":: Creando configuración en el Servidor $3"
-  echo -e "[galera]" > $GALERA_CONF
-  echo -e "binlog_format=ROW" >> $GALERA_CONF
-  echo -e "default-storage-engine=innodb" >> $GALERA_CONF
-  echo -e "innodb_autoinc_lock_mode=2" >> $GALERA_CONF
-  echo -e "bind-address=0.0.0.0" >> $GALERA_CONF
-  echo -e "\n# Galera Provider Configuration" >> $GALERA_CONF
-  echo -e "wsrep_on=ON" >> $GALERA_CONF
-  echo -e "wsrep_provider=/usr/lib/galera/libgalera_smm.so" >> $GALERA_CONF
-  echo -e "\n# Galera Cluster Configuration" >> $GALERA_CONF
-  echo -e "wsrep_cluster_name="galera_cluster"" >> $GALERA_CONF
-  echo -e "wsrep_cluster_address=\"gcomm://${IPS},${IP[REPLICA]}\"" >> $GALERA_CONF
-  echo -e "\n# Galera Synchronization Configuration" >> $GALERA_CONF
-  echo -e "wsrep_sst_method=rsync" >> $GALERA_CONF
-  echo -e "\n# Galera Node Configuration" >> $GALERA_CONF
-  echo -e "wsrep_node_address=\"$2\"" >> $GALERA_CONF
-  echo -e "wsrep_node_name=\"$(nombre "$2")\"" >> $GALERA_CONF
+  echo -e "[galera]" > $GALERA_CONF1
+  echo -e "binlog_format=ROW" >> $GALERA_CONF1
+  echo -e "default-storage-engine=innodb" >> $GALERA_CONF1
+  echo -e "innodb_autoinc_lock_mode=2" >> $GALERA_CONF1
+  echo -e "bind-address=0.0.0.0" >> $GALERA_CONF1
+  echo -e "\n# Galera Provider Configuration" >> $GALERA_CONF1
+  echo -e "wsrep_on=ON" >> $GALERA_CONF1
+  echo -e "wsrep_provider=/usr/lib/galera/libgalera_smm.so" >> $GALERA_CONF1
+  echo -e "\n# Galera Cluster Configuration" >> $GALERA_CONF1
+  echo -e "wsrep_cluster_name="galera_cluster"" >> $GALERA_CONF1
+  echo -e "wsrep_cluster_address=\"gcomm://${IPS},${IP[REPLICA]}\"" >> $GALERA_CONF1
+  echo -e "\n# Galera Synchronization Configuration" >> $GALERA_CONF1
+  echo -e "wsrep_sst_method=rsync" >> $GALERA_CONF1
+  echo -e "\n# Galera Node Configuration" >> $GALERA_CONF1
+  echo -e "wsrep_node_address=\"$2\"" >> $GALERA_CONF1
+  echo -e "wsrep_node_name=\"$(nombre "$2")\"" >> $GALERA_CONF1
 }
 ######## Validar versión de Mysql ########
 validaVerMDB() {
