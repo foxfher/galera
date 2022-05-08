@@ -37,7 +37,7 @@ detecta_os() {
 uso() {
  # APP=$(awk -F"/" '{print $NF}' <<<"${0}")
   #echo -e "───────────────────────────────────────────────────────────────────────"
-  echo -e ":: Comando $APP  "
+  echo -e ":: Comando ${APP}  "
   echo -e "Instalación del Cluster y adiciona replica."
   echo
   echo -e "${GREEN}Modo de empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
@@ -116,7 +116,7 @@ galera(){
      scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
      echo "chmod u+x cluster" > install.sh
-     echo "${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
+     echo "./${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
      echo "sleep 5 && exit" >> install.sh
      chmod u+x install.sh
      ssh $USUARIO@${IP[REPLICA]} "$(< install.sh)"
