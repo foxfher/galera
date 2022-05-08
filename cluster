@@ -20,6 +20,7 @@ FILE=""
 declare -A IP
 SERV="Principal"
 GALERA_CONF="/etc/mysql/mariadb.conf.d/galera.cnf" 
+TP="/tmp/"
 USUARIO="ferrum"
 APP="cluster"
 
@@ -107,14 +108,14 @@ galera(){
      galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
      echo ":: Copiando la configuración temporal al MariaDB"
 #     sudo mv "galera_Pricipal.cnf" $GALERA_CONF
-     sudo mv galera_Principal.cnf /etc/mysql/mariadb.conf.d/galera.cnf
+     sudo mv ${TP}galera_Principal.cnf /etc/mysql/mariadb.conf.d/galera.cnf
      echo ":: Activando el Cluster Galera en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
      echo "::Iniciando MariaDB"
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     sudo scp galera_Replica.cnf cluster $USUARIO@${IP[REPLICA]}:~/
+     sudo scp ${TP}galera_Replica.cnf cluster $USUARIO@${IP[REPLICA]}:~/
      #sudo scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor REPLICA (${IP[REPLICA]}), para configuar el Cluster"
      echo "chmod u+x cluster" > install.sh
@@ -132,7 +133,7 @@ galera(){
 }
 galeraConf(){
   local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
-  local GALERA_CONF1="galera_${3}.cnf"
+  local GALERA_CONF1="${TP}galera_${3}.cnf"
   echo ":: Creando configuración en el Servidor $3"
   echo -e "[galera]" > $GALERA_CONF1
   echo -e "binlog_format=ROW" >> $GALERA_CONF1
@@ -231,7 +232,7 @@ requerimientos() {
   echo ":: Instalando Requerimientos en el Servidor $SERV"
   [[ $CMD="apt-get" ]] && sudo apt-get update
   sudo $CMD install curl netcat rsync  net-tools ufw -y
-  sudo ufw enable echo "y"
+  sudo ufw enable
   add_firewall
  }
 ######## Obtiene nombre del dominio ########
