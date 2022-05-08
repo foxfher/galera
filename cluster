@@ -215,6 +215,7 @@ requerimientos() {
   sudo $CMD install curl netcat rsync  net-tools firewalld -y
   sudo systemctl enable firewalld
   sudo systemctl start firewalld
+  add_firewall
  }
 ######## Obtiene nombre del dominio ########
 function nombre { 
