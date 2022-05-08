@@ -37,10 +37,10 @@ detecta_os() {
 uso() {
  # APP=$(awk -F"/" '{print $NF}' <<<"${0}")
   #echo -e "───────────────────────────────────────────────────────────────────────"
-  echo -e ":: Comando cluster  "
+  echo -e ":: Comando $APP "
   echo -e "Instalación del Cluster y adiciona replica."
   echo
-  echo -e "${GREEN}Modo de empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
+  echo -e "${GREEN}Modo de empleo:$CEND ./$APP ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
   echo -e "Los argumentos son obligatorios para las opciones"
   echo -e "${YELLOW}-s IP         ${GRAY}IP o Dominio del Servidor Principal (ferrum.no-ip.net)$CEND"
   echo -e "${YELLOW}-r IP         ${GRAY}IP o Dominio de la Replica (ferrum.no-ip.net)$CEND"
