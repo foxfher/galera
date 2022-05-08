@@ -184,11 +184,19 @@ validarIP() {
 ######## Agregar puertos al Firewall ##########
 function add_firewall(){
   echo -e ":: Abriendo Puertos en el Servidor $SERV"
+  echo -e ":: Puerto 22 tcp"
+  sudo firewall-cmd --permanent --zone=public --add-port=22/tcp
+  echo -e ":: Puerto 3306 tcp"
   sudo firewall-cmd --permanent --zone=public --add-port=3306/tcp
+  echo -e ":: Puerto 4567 tcp"
   sudo firewall-cmd --permanent --zone=public --add-port=4567/tcp
+  echo -e ":: Puerto 4568 tcp"
   sudo firewall-cmd --permanent --zone=public --add-port=4568/tcp
+  echo -e ":: Puerto 4444 tcp"
   sudo firewall-cmd --permanent --zone=public --add-port=4444/tcp
+  echo -e ":: Puerto 4567 udp"
   sudo firewall-cmd --permanent --zone=public --add-port=4567/udp
+  echo ":: Actualizando firewall"
   sudo firewall-cmd --reload
 }
 ######## Remplaza un  palabra por otra en una cadena ########
