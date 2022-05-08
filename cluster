@@ -192,21 +192,22 @@ validarIP() {
 }
 ######## Agregar puertos al Firewall ##########
 function add_firewall(){
+  sudo ufw default allow outgoing
   echo -e ":: Abriendo Puertos en el Servidor $SERV"
   echo -e ":: Puerto 22 tcp"
-  sudo firewall-cmd --permanent --zone=public --add-port=22/tcp
+  sudo ufw allow 22/tcp
   echo -e ":: Puerto 3306 tcp"
-  sudo firewall-cmd --permanent --zone=public --add-port=3306/tcp
+  sudo ufw allow 3306/tcp
   echo -e ":: Puerto 4567 tcp"
-  sudo firewall-cmd --permanent --zone=public --add-port=4567/tcp
+  sudo ufw allow 4567/tcp
   echo -e ":: Puerto 4568 tcp"
-  sudo firewall-cmd --permanent --zone=public --add-port=4568/tcp
+  sudo ufw allow 4568/tcp
   echo -e ":: Puerto 4444 tcp"
-  sudo firewall-cmd --permanent --zone=public --add-port=4444/tcp
+  sudo ufw allow 4444/tcp
   echo -e ":: Puerto 4567 udp"
-  sudo firewall-cmd --permanent --zone=public --add-port=4567/udp
+  sudo ufw allow 4567/udp
   echo ":: Actualizando firewall"
-  sudo firewall-cmd --reload
+  sudo ufw reload
 }
 ######## Remplaza un  palabra por otra en una cadena ########
 function strreplace() { #(SEARCH ,REPLACE, STRING)
@@ -229,9 +230,8 @@ obtieneIPLocal() {
 requerimientos() {
   echo ":: Instalando Requerimientos en el Servidor $SERV"
   [[ $CMD="apt-get" ]] && sudo apt-get update
-  sudo $CMD install curl netcat rsync  net-tools firewalld -y
-  sudo systemctl enable firewalld
-  sudo systemctl start firewalld
+  sudo $CMD install curl netcat rsync  net-tools ufw -y
+  sudo ufw enable echo "y"
   add_firewall
  }
 ######## Obtiene nombre del dominio ########
