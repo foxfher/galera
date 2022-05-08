@@ -109,7 +109,7 @@ galera(){
      sudo mv "galera_Pricipal.conf" $GALERA_CONF
      echo ":: Activando el Cluster en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
-     echo "::Iniciando MariaDBmoon"
+     echo "::Iniciando MariaDB"
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
@@ -132,7 +132,6 @@ galera(){
 galeraConf(){
   local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
   local GALERA_CONF1="galera_${3}.conf"
-  if [[ $SERV == "Principal" ]] && GALERA_CONF1="${GALERA_CONF}"
   echo ":: Creando configuración en el Servidor $3"
   echo -e "[galera]" > $GALERA_CONF1
   echo -e "binlog_format=ROW" >> $GALERA_CONF1
