@@ -99,22 +99,23 @@ instalar() {
 galera(){
   local IPS=""
   if [ "$SERV" == "Principal" ]; then
-     sudo systemctl stop mariadb.service
+     #sudo systemctl stop mariadb.service
      if [[ $1 -eq 0 ]];then
         [[ ! -z $(cat $GALERA_CONF | grep "${IP[REPLICA]}") ]] && echo ":: Valide la IP de la Replica puede ser que ya este configurado" && exit
         IPS=$(cat $GALERA_CONF | grep "wsrep_cluster_address" | sed -e 's/"$//' | sed 's/wsrep_cluster_address="gcomm:\/\///')
      fi
      galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
      echo ":: Copiando la configuración temporal al MariaDB"
-     sudo mv "galera_Pricipal.conf" $GALERA_CONF
-     echo ":: Activando el Cluster en el Servidor Principal"
+#     sudo mv "galera_Pricipal.cnf" $GALERA_CONF
+     sudo mv galera_Principal.cnf /etc/mysql/mariadb.conf.d/galera.cnf
+     echo ":: Activando el Cluster Galera en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
      echo "::Iniciando MariaDB"
-     sudo systemctl start mariadb.service  
+     sudo systemctl restart mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     scp galera_Replica.conf $USUARIO@${IP[REPLICA]}:$GALERA_CONF
-     scp cluster $USUARIO@${IP[REPLICA]}:cluster
+     sudo scp galera_Replica.cnf cluster $USUARIO@${IP[REPLICA]}:~/
+     #sudo scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor REPLICA (${IP[REPLICA]}), para configuar el Cluster"
      echo "chmod u+x cluster" > install.sh
      echo "sudo -S ./${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
@@ -122,7 +123,7 @@ galera(){
      chmod u+x install.sh
      ssh $USUARIO@${IP[REPLICA]} "$(< install.sh)"
   else
-     sudo mv "galera_Replica.conf" $GALERA_CONF
+     sudo mv "galera_Replica.cnf" $GALERA_CONF
     [[ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
     echo ":: Reiniciando MariaDB en el servidor de $SERV"
     sudo systemctl restart mariadb.service 
@@ -131,7 +132,7 @@ galera(){
 }
 galeraConf(){
   local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
-  local GALERA_CONF1="galera_${3}.conf"
+  local GALERA_CONF1="galera_${3}.cnf"
   echo ":: Creando configuración en el Servidor $3"
   echo -e "[galera]" > $GALERA_CONF1
   echo -e "binlog_format=ROW" >> $GALERA_CONF1
@@ -148,7 +149,7 @@ galeraConf(){
   echo -e "wsrep_sst_method=rsync" >> $GALERA_CONF1
   echo -e "\n# Galera Node Configuration" >> $GALERA_CONF1
   echo -e "wsrep_node_address=\"$2\"" >> $GALERA_CONF1
-  echo -e "wsrep_node_name=\"$(nombre "$2")\"" >> $GALERA_CONF1
+  echo -e "wsrep_node_name=\"$(nombre "$2" "$3")\"" >> $GALERA_CONF1
 }
 ######## Validar versión de Mysql ########
 validaVerMDB() {
@@ -235,7 +236,8 @@ requerimientos() {
  }
 ######## Obtiene nombre del dominio ########
 function nombre { 
-  [[ "${1%%.*}" =~ ^[0-9]+$ ]] && echo "$SERV$(($RANDOM%100))" ||  echo ${1%%.*}
+  local N=$([[ "$2" == "Principal" ]] && echo "Principal1" || echo "$2$(($RANDOM%100))" )
+  [[ "${1%%.*}" =~ ^[0-9]+$ ]] && echo "$N" ||  echo ${1%%.*}
 }
 
 detecta_os
