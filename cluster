@@ -19,7 +19,7 @@ CMD="apt-get"
 FILE=""
 declare -A IP
 SERV="Principal"
-GALERA_CONF="/etc/my.cnf.d/galera.cnf"
+GALERA_CONF='/etc/mysql/mariadb.conf.d/galera.cnf'#"/etc/my.cnf.d/galera.cnf"
 USUARIO="ferrum"
 APP=""
 
@@ -85,7 +85,7 @@ instalar() {
   instalarMariaDB=$(validaVerMDB)
   if [[ $instalarMariaDB -ge 1 ]]; then
     echo ":: Instalando MariaDB"
-    echo "::$INFO Se Agregara Repositorio de MariaDB"
+    echo -e "$INFO Se Agregara Repositorio de MariaDB"
     curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
     [[ $CMD="apt-get" ]] && sudo apt-get update
     sudo $CMD install mariadb-server mariadb-client -y
@@ -93,8 +93,6 @@ instalar() {
   fi
   echo ":: Configurando MariaDB/Mysql para la sincronización en el Servidor $SERV"
   galera $instalarGalera
-  #galeraConf "" "${IP[SERVIDOR]}" "Principal" #cp -rf /tmp/galera_Pricipal.conf $GALERA_CONF
-  #galeraConf "arero11sur.no-ip.net,192.168.1.181" "${IP[REPLICA]}" "Replica" 
   echo ":: Se ha terminado de Configurar en el  Servidor $SERV"
 }
 ######## Generá o obtiene configuración de Galera  ##########
@@ -114,10 +112,11 @@ galera(){
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     scp /tmp/galera_Replica.conf $USUARIO@${IP[REPLICA]}:$GALERA_CONF
+     scp /tmp/galera_Replica.conf $USUARIO@${IP[REPLICA]}:/tmp/galera_Replica.conf
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
      ssh USUARIO@${IP[REPLICA]} "$(< $APP -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
   else
+     sudo cp -rf /tmp/galera_Replica.conf $GALERA_CONF
     [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
     echo ":: Reiniciando MariaDB en el servidor de $SERV"
     sudo systemctl restart mariadb.service 
