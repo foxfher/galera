@@ -113,8 +113,12 @@ galera(){
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
      scp /tmp/galera_Replica.conf $USUARIO@${IP[REPLICA]}:/tmp/galera_Replica.conf
+     scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
-     ssh $USUARIO@${IP[REPLICA]} "$(< ${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
+     echo "chmod u+x cluster" > install.sh
+     echo "${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
+     chmod u+x install.sh
+     ssh $USUARIO@${IP[REPLICA]} "$(< install.sh)"
   else
      sudo cp -rf /tmp/galera_Replica.conf $GALERA_CONF
     [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
