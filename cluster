@@ -229,7 +229,7 @@ obtieneIPLocal() {
 ######## Requerimientos ########
 requerimientos() {
   echo ":: Instalando Requerimientos en el Servidor $SERV"
-  [[ $CMD="apt-get" ]] && sudo apt-get update
+  [[ $CMD="apt-get" ]] && sudo apt-get update    
   sudo $CMD install curl netcat rsync  net-tools -y #ufw 
  # sudo ufw enable
   #add_firewall
