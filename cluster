@@ -35,7 +35,7 @@ detecta_os() {
 
 ########  Ayuda del Comando ########
 uso() {
-  APP=$(awk -F"/" '{print $NF}' <<<"${0}")
+ # APP=$(awk -F"/" '{print $NF}' <<<"${0}")
   #echo -e "───────────────────────────────────────────────────────────────────────"
   echo -e ":: Comando $APP  "
   echo -e "Instalación del Cluster y adiciona replica."
