@@ -89,7 +89,7 @@ instalar() {
     curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
     [[ $CMD="apt-get" ]] && sudo apt-get update
     sudo $CMD install mariadb-server mariadb-client -y
-    [[ $instalarMariaDB -eq 1 ]] && echo ":: Configurar MariaDB" && sudo mysql_secure_installation
+    [[ $instalarMariaDB -eq 1 ]] && echo ":: Configurar MariaDB" && sudo -S mysql_secure_installation
   fi
   echo ":: Configurando MariaDB/Mysql para la sincronización en el Servidor $SERV"
   galera $instalarGalera
