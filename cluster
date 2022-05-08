@@ -58,7 +58,7 @@ param() {
     case "${op}" in
     s) IP[SERVIDOR]=${OPTARG} ;;
     r) IP[REPLICA]=${OPTARG} ;;
-    u) SERV=${OPTARG:="ferrum"} ;;
+    u) USUARIO=${OPTARG:="ferrum"} ;;
     o) SERV=${OPTARG:="Replica"} ;;
     *) uso ;;
     esac
@@ -203,8 +203,8 @@ obtieneIPLocal() {
 requerimientos() {
   echo ":: Instalando Requerimientos en el Servidor $SERV"
   [[ $CMD="apt-get" ]] && sudo apt-get update
-  sudo $CMD install curl netcat rsync  net-tools
-}
+  sudo $CMD install curl netcat rsync  net-tools -y
+ }
 ######## Obtiene nombre del dominio ########
 function nombre { 
   [[ "${1%%.*}" =~ ^[0-9]+$ ]] && echo "$SERV$(($RANDOM%100))" ||  echo ${1%%.*}
