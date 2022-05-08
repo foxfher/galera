@@ -2,6 +2,7 @@
 curl -O https://raw.githubusercontent.com/foxfher/galera/main/cluster
 chmod u+x cluster
 clear
+clear
 echo "Ejecute el comando: "
 ./cluster -h
 echo "./cluster -s principal.no-ip.net -r principal.no-ip.net -u ferrum"
