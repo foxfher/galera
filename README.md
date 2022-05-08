@@ -4,7 +4,7 @@ Instala y Configura el Cluster Galera de MAriaDB
 
 ## Instalaación
 
-Insyala los archivos necesarios 
+Instala los archivos necesarios 
 
 Para instalar, ejecute este comando en su terminal:
 ```console
