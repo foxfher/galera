@@ -20,6 +20,7 @@ FILE=""
 declare -A IP
 SERV="Principal"
 GALERA_CONF="/etc/my.cnf.d/galera.cnf"
+USUARIO="ferrum"
 name=""
 
 
@@ -42,7 +43,8 @@ uso() {
   echo -e "${GREEN}Modo sw empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
   echo -e "Los argumentos son obligatorios para las opciones"
   echo -e "${YELLOW}-s IP         ${GRAY}IP o Dominio del Servidor Principal (ferrum.no-ip.net)$CEND"
-  echo -e "${YELLOW}-r IP         ${GRAY}IP o Dominio de la replica (ferrum.no-ip.net)$CEND"
+  echo -e "${YELLOW}-r IP         ${GRAY}IP o Dominio de la Replica (ferrum.no-ip.net)$CEND"
+  echo -e "${YELLOW}-u IP         ${GRAY}Usuario con el que se Conectará al Servidor de Replica por default se colocará ferrum$CEND"
   #echo -e  "───────────────────────────────────────────────────────────────────────"
   echo
   echo -e "${YELLOW}:: La IP o Dominio del Servidor Principal y Replica deben ser diferentes $CEND"
@@ -52,10 +54,11 @@ uso() {
 
 ########  Obtener parametros y opciones ########
 param() {
-  while getopts ":s:r:o :" op; do
+  while getopts ":s:r:o :u: " op; do
     case "${op}" in
     s) IP[SERVIDOR]=${OPTARG} ;;
     r) IP[REPLICA]=${OPTARG} ;;
+    u) SERV=${OPTARG:="ferrum"} ;;
     o) SERV=${OPTARG:="Replica"} ;;
     *) uso ;;
     esac
@@ -108,9 +111,9 @@ galera(){
      sudo systemctl start mariadb.service  
      galeraConf "$IPS" "${IP[REPLICA]}" "Replica" 
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
-     scp /tmp/galera_Replica.conf ferrum@$IP{[REPLICA]}:$GALERA_CONF
+     scp /tmp/galera_Replica.conf $USUARIO@$IP{[REPLICA]}:$GALERA_CONF
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
-     ssh ferrum@@$IP{[REPLICA]} "$(< $name -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
+     ssh USUARIO@$IP{[REPLICA]} "$(< $name -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
   else
     [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
     echo ":: Reiniciando MariaDB en el servidor de $SERV"
