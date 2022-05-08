@@ -37,7 +37,7 @@ detecta_os() {
 uso() {
  # APP=$(awk -F"/" '{print $NF}' <<<"${0}")
   #echo -e "───────────────────────────────────────────────────────────────────────"
-  echo -e ":: Comando ${APP}  "
+  echo -e ":: Comando cluster  "
   echo -e "Instalación del Cluster y adiciona replica."
   echo
   echo -e "${GREEN}Modo de empleo:$CEND ./$name ${YELLOW}-s ${BLUE}IP  ${YELLOW}-r ${BLUE}IP$CEND"
@@ -106,7 +106,7 @@ galera(){
      fi
      galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
      echo ":: Copiando la configuración temporal al MariaDB"
-     sudo cp -f /tmp/galera_Pricipal.conf $GALERA_CONF
+     sudo mv /tmp/galera_Pricipal.conf $GALERA_CONF
      echo ":: Activando el CLuster en el Servidor Principal"
      [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
      sudo systemctl start mariadb.service  
@@ -116,13 +116,13 @@ galera(){
      scp cluster $USUARIO@${IP[REPLICA]}:cluster
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
      echo "chmod u+x cluster" > install.sh
-     echo "./${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
+     echo "sudo -S ./${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o" >> install.sh  
      echo "sleep 5 && exit" >> install.sh
      chmod u+x install.sh
      ssh $USUARIO@${IP[REPLICA]} "$(< install.sh)"
   else
-     sudo cp -f /tmp/galera_Replica.conf $GALERA_CONF
-    [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
+     sudo mv /tmp/galera_Replica.conf $GALERA_CONF
+    [[ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
     echo ":: Reiniciando MariaDB en el servidor de $SERV"
     sudo systemctl restart mariadb.service 
   fi
