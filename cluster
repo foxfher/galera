@@ -21,7 +21,7 @@ declare -A IP
 SERV="Principal"
 GALERA_CONF='/etc/mysql/mariadb.conf.d/galera.cnf'#"/etc/my.cnf.d/galera.cnf"
 USUARIO="ferrum"
-APP=""
+APP="cluster"
 
 
 ########  Detecta Sistema Distribución de Linux ########
@@ -114,7 +114,7 @@ galera(){
      echo ":: Copia el achivo de configuración de forma remota a Replica (${IP[REPLICA]}), proporcionar la contraseña cuando se le indique"
      scp /tmp/galera_Replica.conf $USUARIO@${IP[REPLICA]}:/tmp/galera_Replica.conf
      echo ":: Se Conectará al servidor $SERV (${IP[REPLICA]}), para configuar el Cluster"
-     ssh USUARIO@${IP[REPLICA]} "$(< $APP -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
+     ssh $USUARIO@${IP[REPLICA]} "$(< ${APP} -s ${IP[SERVIDOR]} -r ${IP[REPLICA]} -o)"
   else
      sudo cp -rf /tmp/galera_Replica.conf $GALERA_CONF
     [ ! -f $GALERA_CONF ]] && echo ":: Algo a fallado, Copie el archivo /tmp/galera_Replica.conf del Servidor Principal al Servidor $SERV a $GALERA_CONF y reinice el servicio de MariaDB." && exit
