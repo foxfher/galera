@@ -2,7 +2,7 @@
  
 Instala y Configura el Cluster Galera de MAriaDB
 
-## Instalaación
+## Instalación
 
 Instala los archivos necesarios 
 
