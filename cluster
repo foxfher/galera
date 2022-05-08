@@ -132,7 +132,7 @@ galera(){
 galeraConf(){
   local IPS=$([[ -z $1 ]] && echo "${IP[SERVIDOR]}" || echo "$1")
   local GALERA_CONF1="galera_${3}.conf"
-  if [[ $SERV == "Principal" ] && GALERA_CONF1="${GALERA_CONF}"]
+  if [[ $SERV == "Principal" ]] && GALERA_CONF1="${GALERA_CONF}"
   echo ":: Creando configuración en el Servidor $3"
   echo -e "[galera]" > $GALERA_CONF1
   echo -e "binlog_format=ROW" >> $GALERA_CONF1
