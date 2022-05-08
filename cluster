@@ -100,7 +100,7 @@ galera(){
   if [ "$SERV" == "Principal" ]; then
      sudo systemctl stop mariadb.service
      if [[ $1 -eq 0 ]];then
-        [[ grep -qF "${IP[REPLICA]}" $GALERA_CONF ]] && echo ":: Valide la IP de la Replica puede ser que ya este configurado" && exit
+        [[ ! -z $(cat $GALERA_CONF | grep "${IP[REPLICA]}") ]] && echo ":: Valide la IP de la Replica puede ser que ya este configurado" && exit
         IPS=$(cat $GALERA_CONF | grep "wsrep_cluster_address" | sed -e 's/"$//' | sed 's/wsrep_cluster_address="gcomm:\/\///')
      fi
      galeraConf "$IPS" "${IP[SERVIDOR]}" "Principal" 
