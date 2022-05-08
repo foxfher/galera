@@ -74,10 +74,10 @@ instalar() {
 
   obtieneIP
   obtieneIPLocal
- if [ "$SERV" == "Principal" ]; then
-  validarIP "${IP[SERVIDOR]}" "Principal"
-  validarIP "${IP[REPLICA]}" "Replica"
- fi 
+# if [ "$SERV" == "Principal" ]; then
+#  validarIP "${IP[SERVIDOR]}" "Principal"
+ # validarIP "${IP[REPLICA]}" "Replica"
+ #fi 
 
   echo -e ":: Configurando el Servidor $SERV"
   #valida si existe archivo de configuración de galera y Mysql (MariaDB)
