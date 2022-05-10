@@ -16,7 +16,9 @@ SUCCESS="${GREEN}[✔]::[Succes]:${CEND}"
 INFO="${BLUE}[!]::[Info]:${CEND}"
 ## Variables
 CMD="apt-get"
+CONFI=""
 FILE=""
+VERMDB="10.7"
 declare -A IP
 SERV="Principal"
 GALERA_CONF="/etc/mysql/mariadb.conf.d/galera.cnf"
@@ -28,6 +30,7 @@ IPS=""
 detecta_os() {
     if ! cat /proc/version | grep -q SUSE; then
         CMD="apt-get"
+        CONFI="-y"
     else
         CMD="zypper"
     fi
@@ -67,7 +70,7 @@ param() {
     shift $((OPTIND - 1))
     [[ -z "${IP[SERVIDOR]}" ]] || [[ -z "${IP[REPLICA]}" ]] || [[ "${IP[SERVIDOR]}" == "${IP[REPLICA]}" ]] && uso
 }
-
+# Instalar Galera
 instalar() {
     local instalarGalera=0
     local instalarMariaDB=0
@@ -86,14 +89,27 @@ instalar() {
     if [[ $instalarMariaDB -ge 1 ]]; then
         echo ":: Instalando MariaDB"
         echo -e "$INFO Se Agregara Repositorio de MariaDB"
-        curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+        isOpenSuse
         [[ $CMD="apt-get" ]] && sudo apt-get update
-        sudo $CMD install mariadb-server mariadb-client -y
+        sudo $CMD install mariadb-server mariadb-client $CONFI
         [[ $instalarMariaDB -eq 1 ]] && echo ":: Configurar MariaDB" && sudo -S mysql_secure_installation
     fi
     echo ":: Configurando MariaDB/Mysql para la sincronización en el Servidor $SERV"
     galera $instalarGalera
     echo ":: Se ha terminado de Configurar en el  Servidor $SERV"
+}
+######## Determina si es de OpenSuse  ########
+isOpenSuse(){
+    . /etc/os-release
+    if [ "$ID"== "opensuse" ]; then
+        VERMDB=$(strreplace "mariadb_server_version_real=mariadb-" "" "$(curl -sS  https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | grep "mariadb_server_version_real=mariadb")")
+        sudo rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+        sudo zypper --gpg-auto-import-keys refresh
+        sudo zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/$VERMDB/opensuse/15/x86_64 mariadb
+        sudo zypper refresh
+    else
+        curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+    fi
 }
 ######## Generá o obtiene configuración de Galera  ##########
 galera(){
@@ -274,7 +290,7 @@ obtieneIPLocal() {
 requerimientos() {
     echo ":: Instalando Requerimientos en el Servidor $SERV"
     [[ $CMD="apt-get" ]] && sudo apt-get update
-    sudo $CMD install curl netcat rsync  net-tools -y #ufw
+    sudo $CMD install curl netcat rsync  net-tools $CONFI #ufw
     # sudo ufw enable
     #add_firewall
 }
@@ -289,5 +305,5 @@ param $@
 requerimientos
 instalar
 #validaGalera
-
+#isOpenSuse
 
