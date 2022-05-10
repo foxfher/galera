@@ -5,4 +5,4 @@ clear
 clear
 echo "Ejecute el comando: "
 ./cluster -h
-echo "./cluster -s principal.no-ip.net -r principal.no-ip.net -u ferrum"
+echo "./cluster -s principal.no-ip.net -r replica.no-ip.net -u ferrum"
