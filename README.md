@@ -49,7 +49,8 @@ Los argumentos son obligatorios para las opciones
 -u USER       Usuario con el que se Conectará al Servidor de Replica por default ferrum
 
 :: La IP o Dominio del Servidor Principal y Replica deben ser diferentes 
-:: Recuerde que los siguientes Puertos del Router deben estar abiertos: 22 tcp, 3306 tcp, 4567 tcp/udp,4568 tcp,4444 tcp 
+:: Recuerde que los siguientes Puertos del Router deben estar abiertos:
+   22 tcp, 3306 tcp, 4567 tcp/udp,4568 tcp,4444 tcp 
 ```
 
 ##  &copy;Creditos
