@@ -101,7 +101,7 @@ instalar() {
 ######## Determina si es de OpenSuse  ########
 isOpenSuse(){
     . /etc/os-release
-    if [ "$ID"== "opensuse" ]; then
+    if [ "$ID" == "opensuse" ]; then
         VERMDB=$(strreplace "mariadb_server_version_real=mariadb-" "" "$(curl -sS  https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | grep "mariadb_server_version_real=mariadb")")
         sudo rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
         sudo zypper --gpg-auto-import-keys refresh

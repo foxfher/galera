@@ -1,5 +1,5 @@
 #!/bin/bash
-curl -O https://raw.githubusercontent.com/foxfher/galera/main/cluster
+curl -OsS https://raw.githubusercontent.com/foxfher/galera/main/cluster
 chmod u+x cluster
 clear
 clear
