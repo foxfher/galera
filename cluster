@@ -103,9 +103,9 @@ isOpenSuse(){
     . /etc/os-release
     if [ "$ID" == "opensuse" ]; then
         VERMDB=$(strreplace "mariadb_server_version_real=mariadb-" "" "$(curl -sS  https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | grep "mariadb_server_version_real=mariadb")")
-        sudo rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+        sudo rpm --import https://mirrors.gigenet.com/mariadb/yum/RPM-GPG-KEY-MariaDB
+        sudo zypper addrepo --gpgcheck --refresh https://mirrors.gigenet.com/mariadb/yum/10.7/opensuse/15/x86_64 mariadb
         sudo zypper --gpg-auto-import-keys refresh
-        sudo zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/$VERMDB/opensuse/15/x86_64 mariadb
         sudo zypper refresh
     else
         curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
@@ -137,7 +137,7 @@ creaPrincipal() {
     sudo mv -bv galera_Principal.cnf /etc/mysql/mariadb.conf.d/galera.cnf
     echo ":: Activando el Cluster Galera en el Servidor Principal"
     [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
-    echo ":: Iniciando MariaDB"
+    echo ":: Iniciando MariaDB" 
     sudo systemctl start mariadb.service
 }
 ########### Crea y establece comunicación para configuración para la Replica  ##############
