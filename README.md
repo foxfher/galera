@@ -12,7 +12,7 @@ Instala los archivos necesarios
 
 Para instalar, ejecute este comando en su terminal:
 ```console
-curl https://raw.githubusercontent.com/foxfher/galera/master/install | sh
+curl -sS https://raw.githubusercontent.com/foxfher/galera/master/install | sh
 ```
 Después ejecute el comando con las IPs de los servidores y el usuario de conexión por medio de ssh.
 ```console
