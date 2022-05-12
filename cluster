@@ -98,6 +98,26 @@ instalar() {
     galera $instalarGalera
     echo ":: Se ha terminado de Configurar en el  Servidor $SERV"
 }
+
+configuraMariaDB(){
+    
+    #datadir                 = /var/lib/mysql
+    
+    #datadir                  = /home/mysql
+    lower_case_table_names = 1
+    # tmpdir                  = /home/mysqltmp
+    lc-messages-dir         = /usr/share/mysql
+    server-id       = 1
+    max_binlog_size=100M
+    sync_binlog=1
+    innodb_flush_log_at_trx_commit=1
+    expire_logs_days=30
+    log-bin = bodega-bin
+    binlog_format = STATEMENT
+    auto_increment_increment = 25
+    auto_increment_offset = 1
+    
+}
 ######## Determina si es de OpenSuse  ########
 isOpenSuse(){
     . /etc/os-release
@@ -137,7 +157,7 @@ creaPrincipal() {
     sudo mv -bv galera_Principal.cnf /etc/mysql/mariadb.conf.d/galera.cnf
     echo ":: Activando el Cluster Galera en el Servidor Principal"
     [[ $1 -eq 1 ]] &&  sudo galera_new_cluster
-    echo ":: Iniciando MariaDB" 
+    echo ":: Iniciando MariaDB"
     sudo systemctl start mariadb.service
 }
 ########### Crea y establece comunicación para configuración para la Replica  ##############
@@ -179,7 +199,7 @@ galeraConf(){
     local GALERA_CONF1="galera_${3}.cnf"
     echo ":: Creando configuración en el Servidor $3"
     echo -e "[galera]" > $GALERA_CONF1
-    echo -e "binlog_format=ROW" >> $GALERA_CONF1
+    echo -e "binlog_format=STATEMENT" >> $GALERA_CONF1
     echo -e "default-storage-engine=innodb" >> $GALERA_CONF1
     echo -e "innodb_autoinc_lock_mode=2" >> $GALERA_CONF1
     echo -e "bind-address=0.0.0.0" >> $GALERA_CONF1
